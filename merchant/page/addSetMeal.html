@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>套餐信息</title>
+    <script type="text/javascript" src="../../lib/vue.js"></script>
+    <script type="text/javascript" src="../../lib/layui/layui.js"></script>
+    <script type="text/javascript" src="../../lib/jquery-3.5.1.min.js"></script>
+    <script type="text/javascript" src="../../lib/layer/layer.js"></script>
+    <script type="text/javascript" src="../../js/CONFIG.js"></script>
+    <style>
+        @import "../../lib/layui/css/layui.css";
+        @import "../../lib/layer/theme/default/layer.css";
+
+        .layui-upload-drag {
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+<div style="padding: 25px" id="APP">
+    <div class="layui-form">
+        <h1>{{title}}</h1>
+        <fieldset class="layui-elem-field">
+            <legend>套餐图</legend>
+            <div class="layui-field-box">
+                <div class="">
+                    <div id="layer-photos-demo" class="layer-photos-demo">
+                        <img @click="openImg()" style='max-width: 200px;height: 200px' alt=""
+                             :src="getImageUrl(setMealMsg.imgs)">
+                    </div>
+                    <div class="layui-upload-drag" id="uploadImg">
+                        <i class="layui-icon layui-icon-add-1"></i>
+                    </div>
+                </div>
+            </div>
+        </fieldset>
+        <div class="layui-form-item">
+            <label class="layui-form-label">套餐名</label>
+            <div class="layui-input-inline">
+                <input type="text" name="sname" required lay-verify="required" v-model="setMealMsg.sname"
+                       autocomplete="off"
+                       class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">价格</label>
+            <div class="layui-input-inline">
+                <input type="text" name="price" required lay-verify="required" v-model="setMealMsg.price"
+                       autocomplete="off"
+                       class="layui-input">
+            </div>
+        </div>
+
+        <fieldset class="layui-elem-field">
+            <legend>可选分类</legend>
+            <div class="layui-field-box">
+                <input type="text" v-model="setMealTypeS" placeholder="搜索或添加" autocomplete="off" class="layui-input">
+                <br>
+                <div class="layui-btn-container">
+                    <button v-if="item.indexOf(setMealTypeS)!==-1 && !getType().includes(item)"
+                            v-for="item in setMealType"
+                            @click="pushType(item)" class="layui-btn layui-btn-radius layui-btn-primary">{{item}}
+                    </button>
+
+                    <button v-if="getSTypeEnable(setMealTypeS) && setMealTypeS!==''"
+                            @click="pushType(setMealTypeS)" class="layui-btn layui-btn-radius">{{setMealTypeS}}
+                    </button>
+                </div>
+            </div>
+        </fieldset>
+        <blockquote class="layui-elem-quote layui-quote-nm">
+            类型:
+            <div class="layui-btn-container">
+                <button @click="removeType(item)" v-if="(i+1)%3===0" v-for="(item,i) in getType()"
+                        class="layui-btn layui-btn-xs layui-btn-radius layui-btn-warm">{{item}}
+                </button>
+                <button @click="removeType(item)" v-if="(i+1)%3===1" v-for="(item,i) in getType()"
+                        class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal">{{item}}
+                </button>
+                <button @click="removeType(item)" v-if="(i+1)%3===2" v-for="(item,i) in getType()"
+                        class="layui-btn layui-btn-xs layui-btn-radius layui-btn-danger">{{item}}
+                </button>
+            </div>
+            共<span class="layui-badge layui-bg-orange">{{getType().length}}</span>类
+        </blockquote>
+
+        <div class="layui-form-item uid">
+            <label class="layui-form-label">商家ID</label>
+            <div class="layui-input-inline">
+                <input type="text" name="userId" required lay-verify="required" v-model="setMealMsg.userId"
+                       autocomplete="off"
+                       class="layui-input">
+            </div>
+        </div>
+
+        <div class="layui-form-item layui-form-text">
+            <label class="layui-form-label">套餐简介</label>
+            <div class="layui-input-block">
+                <textarea name="tests" v-model="setMealMsg.tests" class="layui-textarea"></textarea>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn layui-btn-normal add" lay-submit lay-filter="add">立即提交</button>
+                <button class="layui-btn layui-btn-normal rest" lay-submit lay-filter="rest">立即修改</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $(".add").hide();
+    $(".rest").hide();
+    $(".uid").hide();
+
+    function getQueryVariable(variable) {
+        let query = window.location.search.substring(1);
+        let vars = query.split("&");
+        for (let i = 0; i < vars.length; i++) {
+            let pair = vars[i].split("=");
+            if (pair[0] === variable) {
+                return pair[1];
+            }
+        }
+        return false;
+    }
+
+    function removeOff() {
+        if (app.setMealMsg.type === '') {
+            return;
+        }
+        let ty = app.setMealMsg.type.split(";");
+        let tmp = [];
+        for (let i = 0; i < ty.length; i++) {
+            if (ty[i] !== "") {
+                tmp.push(ty[i])
+            }
+        }
+        ty = tmp;
+        debug_(ty)
+        if (ty.length <= 1) {
+            return;
+        }
+        ty = ty.sort();
+        let off = [];
+        for (let i = 0; i < ty.length - 1; i++) {
+            if (ty[i] === ty[i + 1]) {
+                off.push(i);
+            }
+        }
+        let str = ""
+        debug_(off)
+        if (off.length > 0) {
+            for (let i = 0; i < ty.length; i++) {
+                if (!off.includes(i)) {
+                    str += ty[i] + ";";
+                }
+            }
+            app.setMealMsg.type = str;
+            layer.msg('商品分类已自动优化');
+        } else {
+            for (let i = 0; i < ty.length; i++) {
+                str += ty[i] + ";";
+            }
+            app.setMealMsg.type = str;
+        }
+    }
+
+    let app = new Vue({
+        el: "#APP",
+        data: {
+            title: "",
+            token: "",
+            id: "",
+            setMealMsg: {
+                sname: "",
+                price: "",
+                type: "",
+                imgs: "",
+                tests: "",
+                userId: ""
+            },
+            setMealType: [],
+            setMealTypeS: "",
+        },
+        methods: {
+            getType: function () {
+                let ty = this.setMealMsg.type.split(";");
+                let t = [];
+                for (let i = 0; i < ty.length; i++) {
+                    if (ty[i] !== "") {
+                        t.push(ty[i]);
+                    }
+                }
+                ty = t;
+                return ty;
+            },
+            pushType: function (str) {
+                if (this.getType().length >= 10) {
+                    LMessageError("最多添加10个类别属性")
+                    return false;
+                }
+                str = str.replace(/\s*/g, '');
+                let regEn = /[`~!@#$%^&*()_+<>?:"{},.\/;'[\]]/im,
+                    regCn = /[·！#￥（——）：；“”‘、，|《。》？、【】[\]]/im;
+                if (regEn.test(str) || regCn.test(str)) {
+                    LMessageError("不能包含特殊字符")
+                    return false;
+                }
+                let ty = this.getType();
+                if (!ty.includes(str)) {
+                    this.setMealMsg.type += ";" + str + ";"
+                } else {
+                    LMessageError("类别已存在");
+                    return false;
+                }
+                this.goodsTypeS = "";
+                removeOff();
+                return false;
+            },
+            getSTypeEnable: function (str) {
+                if (this.setMealType.includes(str)) {
+                    return false
+                }
+                return true;
+            },
+            removeType: function (str) {
+                let arrOld = this.getType();
+                let arr = [];
+                for (let i = 0; i < this.getType().length; i++) {
+                    if (arrOld[i] !== str) {
+                        arr.push(arrOld[i])
+                    }
+                }
+                debug_(str)
+                str = "";
+                for (let i = 0; i < arr.length; i++) {
+                    str += arr[i] + ";"
+                }
+                this.setMealMsg.type = str;
+            },
+            getImageUrl: function (id) {
+                if (id === "" || id === "null" || id === null) {
+                    return "";
+                }
+                return HOST + "/file/image/" + id;
+            },
+            openImg: function () {
+                layer.photos({
+                    photos: '#layer-photos-demo'
+                    , anim: 4 //0-6的选择，指定弹出图片动画类型，默认随机（请注意，3.0之前的版本用shift参数）
+                });
+            }
+        }
+    });
+
+    let key = getQueryVariable("key");
+    app.token = getQueryVariable("token");
+    app.id = getQueryVariable("uid");
+
+    //被操作的套餐id
+    let setMealId = getQueryVariable("id");
+    app.setMealMsg.userId = app.id;
+    if (key === null || key === "null" || key === false || app.token === null || app.id === null || app.token === "null" || app.id === "null" || app.token === false || app.id === false) {
+        alert("没有权限");
+        window.close();
+        //获取窗口索引
+        let index = parent.layer.getFrameIndex(window.name);
+        parent.layer.close(index);
+    } else if (key === "rest") {
+        //修改套餐信息时获取用户信息
+        $(".rest").show();
+        app.title = "修改套餐信息" + setMealId;
+        postAndHeader("/setMeal/getById", {token: app.token, id: app.id, identity: "merchant"}, {id: setMealId}, function (data) {
+            //debug_(data)
+            if (data.code === 0) {
+                app.setMealMsg = data.data;
+            }else {
+                errorMessage(data);
+            }
+        }, "获取套餐信息");
+    } else if (key === "add") {
+        app.title = "添加套餐"
+        $(".add").show();
+    }
+    layui.use('upload', function () {
+        let upload = layui.upload;
+        //执行实例
+        let uploadInst = upload.render({
+            elem: '#uploadImg' //绑定元素
+            , url: HOST + "/file/uploadImage" //上传接口
+            , headers: {id: setMealId}
+            , done: function (res) {
+                debug_(res)
+                //上传完毕回调
+                if (res.code === 0) {
+                    app.setMealMsg.imgs = res.data;
+                } else {
+                    LMessageError(res.message, res.code);
+                }
+            }
+            , error: function () {
+                //请求异常回调
+                errorLog("文件上传异常", [index], "File");
+            }
+        });
+    });
+
+    function addSetMeal() {
+        // layer.alert("添加成功")
+        let da = {
+            sname: app.sname,
+            price: app.price,
+            type: app.type,
+            imgs: app.setMealMsg.imgs,
+            tests: app.tests,
+            userId: app.userId
+        }
+        da.userId = app.id;
+        debug_(da.type)
+        postAndHeader("/setMeal/add", {token: app.token, id: app.id, identity: "merchant"}, da, function (data) {
+            if (data.code === 0) {
+                // LMessageSuccess("添加成功")
+                parent.LMessageSuccess("添加成功");
+                let index = parent.layer.getFrameIndex(window.name); //获取窗口索引
+                parent.layer.close(index);
+            } else {
+                errorMessage(data);
+            }
+        }, "正在提交")
+    }
+
+    function restSetMeal() {
+        // layer.alert("提交成功")
+        let da = {
+            id: setMealId,
+            sname: app.sname,
+            price: app.price,
+            type: app.type,
+            imgs: app.setMealMsg.imgs,
+            tests: app.tests,
+            userId: app.userId
+
+        }
+        da.userId = app.id;
+        debug_(da.type)
+        postAndHeader("/setMeal/rest", {token: app.token, id: app.id, identity: "merchant"}, da, function (data) {
+            if (data.code === 0) {
+                parent.LMessageSuccess("提交成功");
+                let index = parent.layer.getFrameIndex(window.name); //获取窗口索引
+                parent.layer.close(index);
+            } else {
+                errorMessage(data);
+            }
+        }, "正在提交")
+    }
+
+    layui.use('form', function () {
+        let form = layui.form;
+        //监听提交
+        form.on('submit(add)', function (data) {
+            app.sname = data.field.sname;
+            app.price = data.field.price;
+            app.type = app.setMealMsg.type;
+            app.imgs = data.field.imgs;
+            app.tests = data.field.tests;
+            app.userId = data.field.userId;
+            //debug_(app.type)
+            addSetMeal();
+            return false;
+        });
+        form.on('submit(rest)', function (data) {
+            app.sname = data.field.sname;
+            app.price = data.field.price;
+            app.type = app.setMealMsg.type;
+            app.imgs = data.field.imgs;
+            app.tests = data.field.tests;
+            app.userId = data.field.userId;
+            restSetMeal();
+            return false;
+        });
+    });
+
+    function getType() {
+        postAndHeader("/setMeal/getType", {token: app.token, id: app.id, identity: "merchant"}, null, function (data) {
+            if (data.code === 0) {
+                app.setMealType = data.data;
+            } else {
+                LMessageError(data.msg, data.code);
+            }
+        }, "获取分类");
+    }
+
+    getType();
+</script>
+</body>
+</html>

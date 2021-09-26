@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>商户信息</title>
+    <script type="text/javascript" src="../lib/vue.js"></script>
+    <script type="text/javascript" src="../lib/layui/layui.js"></script>
+    <script type="text/javascript" src="../lib/jquery-3.5.1.min.js"></script>
+    <script type="text/javascript" src="../lib/layer/layer.js"></script>
+    <script type="text/javascript" src="../js/CONFIG.js"></script>
+    <style>
+        @import "../lib/layui/css/layui.css";
+        @import "../lib/layer/theme/default/layer.css";
+
+        .layui-upload-drag {
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+<div style="padding: 25px" id="APP">
+    <form class="layui-form" action="">
+        <h1>{{title}}</h1>
+        <fieldset class="layui-elem-field">
+            <legend>用户头像</legend>
+            <div class="layui-field-box">
+                <div class="">
+                    <div id="layer-photos-demo" class="layer-photos-demo">
+                        <img @click="openImg()" style='max-width: 200px;height: 200px' alt=""
+                             :src="getImageUrl(userMsg.portrait)">
+                    </div>
+                    <div class="layui-upload-drag" id="uploadImg">
+                        <i class="layui-icon layui-icon-add-1"></i>
+                    </div>
+                </div>
+            </div>
+        </fieldset>
+        <div class="layui-form-item Uname">
+            <label class="layui-form-label">用户名</label>
+            <div class="layui-input-inline">
+                <input type="text" name="username" required lay-verify="required" v-model="userMsg.username"
+                       autocomplete="off"
+                       class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">用户密码</label>
+            <div class="layui-input-inline">
+                <input type="password" name="password" required lay-verify="required" v-model="userMsg.password"
+                       autocomplete="off"
+                       class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">昵称</label>
+            <div class="layui-input-inline">
+                <input type="text" name="uname" required lay-verify="required" v-model="userMsg.uname"
+                       autocomplete="off"
+                       class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">地址</label>
+            <div class="layui-input-inline">
+                <input type="text" name="address" required lay-verify="required" v-model="userMsg.address"
+                       autocomplete="off"
+                       class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">等级</label>
+            <div class="layui-input-inline">
+                <input type="text" name="grade" required lay-verify="required" v-model="userMsg.grade"
+                       autocomplete="off"
+                       class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">经验值</label>
+            <div class="layui-input-inline">
+                <input type="text" name="experience" required lay-verify="required" v-model="userMsg.experience"
+                       autocomplete="off"
+                       class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item layui-form-text">
+            <label class="layui-form-label">个人简介</label>
+            <div class="layui-input-block">
+                <textarea name="introduce" v-model="userMsg.introduce" class="layui-textarea"></textarea>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn layui-btn-normal add" lay-submit lay-filter="add">立即提交</button>
+                <button class="layui-btn layui-btn-normal rest" lay-submit lay-filter="rest">立即修改</button>
+            </div>
+        </div>
+    </form>
+</div>
+<script>
+    $(".add").hide();
+    $(".rest").hide();
+    $(".Uname").hide();
+
+    function getQueryVariable(variable) {
+        let query = window.location.search.substring(1);
+        let vars = query.split("&");
+        for (let i = 0; i < vars.length; i++) {
+            let pair = vars[i].split("=");
+            if (pair[0] === variable) {
+                return pair[1];
+            }
+        }
+        return false;
+    }
+
+    let app = new Vue({
+        el: "#APP",
+        data: {
+            title: "",
+            token: "",
+            id: "",
+            oldPassword:"",
+            userMsg: {
+                username: "",
+                password: "",
+                uname: "",
+                portrait: "",
+                introduce: "",
+                address: "",
+                grade: "",
+                experience: ""
+            }
+        },
+        methods: {
+            getImageUrl: function (id) {
+                if (id === "" || id === "null" || id === null) {
+                    return "";
+                }
+                return HOST + "/file/image/" + id;
+            },
+            openImg: function () {
+                layer.photos({
+                    photos: '#layer-photos-demo'
+                    , anim: 4 //0-6的选择，指定弹出图片动画类型，默认随机（请注意，3.0之前的版本用shift参数）
+                });
+            }
+        }
+    });
+
+    let key = getQueryVariable("key");
+    app.token = getQueryVariable("token");
+    app.id = getQueryVariable("uid");
+    //被操作的用户id
+    let userId = getQueryVariable("id");
+    if (key === null || key === "null" || key === false || app.token === null || app.id === null || app.token === "null" || app.id === "null" || app.token === false || app.id === false) {
+        alert("没有权限");
+        window.close();
+        //获取窗口索引
+        let index = parent.layer.getFrameIndex(window.name);
+        parent.layer.close(index);
+    } else if (key === "rest") {
+        //修改用户信息时获取用户信息
+        $(".rest").show();
+        app.title = "修改用户信息" + userId;
+        postAndHeader("/user/getUserById", {token: app.token, id: app.id}, {id: userId}, function (data) {
+            //debug_(data)
+            if (data.code === 0) {
+                app.userMsg = data.data;
+                app.oldPassword = app.userMsg.password;
+                if (data.data.introduce === null || data.data.introduce === "") {
+                    app.userMsg.introduce = "这个人很懒，什么都没有写~";
+                }
+            }
+        }, "获取用户信息");
+    } else if (key === "add") {
+        app.title = "添加用户"
+        $(".add").show();
+        $(".Uname").show();
+    }
+    layui.use('upload', function () {
+        let upload = layui.upload;
+        //执行实例
+        let uploadInst = upload.render({
+            elem: '#uploadImg' //绑定元素
+            , url: HOST + "/file/uploadImage" //上传接口
+            , headers: {id: userId}
+            , done: function (res) {
+                debug_(res)
+                //上传完毕回调
+                if (res.code === 0) {
+                    app.userMsg.portrait = res.data;
+                } else {
+                    LMessageError(res.message, res.code);
+                }
+            }
+            , error: function () {
+                //请求异常回调
+                errorLog("文件上传异常", [index], "File");
+            }
+        });
+    });
+
+    function addSUser() {
+        // layer.alert("添加成功")
+        let da = {
+            username: app.username,
+            password: app.password,
+            uname: app.uname,
+            portrait: app.userMsg.portrait,
+            introduce: app.introduce,
+            address: app.address,
+            grade: app.grade,
+            experience: app.experience
+        }
+        postAndHeader("/user/add", {token: app.token, id: app.id}, da, function (data) {
+            if (data.code === 0) {
+                // LMessageSuccess("添加成功")
+                parent.LMessageSuccess("添加成功");
+                let index = parent.layer.getFrameIndex(window.name); //获取窗口索引
+                parent.layer.close(index);
+            } else {
+                errorMessage(data);
+            }
+        }, "正在提交")
+    }
+
+    function restSUser() {
+        // layer.alert("提交成功")
+        let da = {
+            id: userId,
+            password: app.password,
+            uname: app.uname,
+            portrait: app.userMsg.portrait,
+            introduce: app.introduce,
+            address: app.address,
+            grade: app.grade,
+            experience: app.experience
+        }
+        if (da.password===app.oldPassword){
+            da.password="";
+        }
+        postAndHeader("/user/rest", {token: app.token, id: app.id}, da, function (data) {
+            if (data.code === 0) {
+                parent.LMessageSuccess("提交成功");
+                let index = parent.layer.getFrameIndex(window.name); //获取窗口索引
+                parent.layer.close(index);
+            } else {
+                errorMessage(data);
+            }
+        }, "正在提交")
+    }
+
+    layui.use('form', function () {
+        let form = layui.form;
+        //监听提交
+        form.on('submit(add)', function (data) {
+            app.username = data.field.username;
+            app.password = data.field.password;
+            app.uname = data.field.uname;
+            app.introduce = data.field.introduce;
+            app.address = data.field.address;
+            app.grade = data.field.grade;
+            app.experience = data.field.experience;
+            addSUser();
+            return false;
+        });
+        form.on('submit(rest)',function (data) {
+            app.password = data.field.password;
+            app.uname = data.field.uname;
+            app.introduce = data.field.introduce;
+            app.address = data.field.address;
+            app.grade = data.field.grade;
+            app.experience = data.field.experience;
+            restSUser();
+            return false;
+        });
+    });
+</script>
+</body>
+</html>

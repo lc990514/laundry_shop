@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>后台管理</title>
+    <script type="text/javascript" src="lib/vue.js"></script>
+    <script type="text/javascript" src="lib/layui/layui.js"></script>
+    <script type="text/javascript" src="lib/jquery-3.5.1.min.js"></script>
+    <script type="text/javascript" src="lib/layer/layer.js"></script>
+    <script type="text/javascript" src="js/index.js"></script>
+    <script type="text/javascript" src="js/CONFIG.js"></script>
+    <script type="text/javascript" src="js/superBody.js"></script>
+    <script type="text/javascript" src="js/Chart.min.js"></script>
+    <style>
+        @import "lib/layui/css/layui.css";
+        @import "lib/layer/theme/default/layer.css";
+    </style>
+</head>
+<body class="layui-layout-body">
+<div class="layui-layout layui-layout-admin" id="BOX">
+    <div class="layui-header">
+        <div class="layui-logo">洗衣乐园后台管理</div>
+        <ul class="layui-nav layui-layout-right">
+            <li class="layui-nav-item">
+                <a href="javascript:void(0);">
+                    <img :src="getImageUrl()" class="layui-nav-img">
+                    {{uname}}
+                </a>
+                <dl class="layui-nav-child">
+                    <dd><a onclick="message()">基本资料</a></dd>
+                    <dd><a onclick="restPassword()">安全设置</a></dd>
+                </dl>
+            </li>
+            <li class="layui-nav-item"><a id="signQut" onclick="logout()">退出登录</a></li>
+        </ul>
+    </div>
+
+    <div class="layui-side layui-bg-black">
+        <div class="layui-side-scroll">
+            <!-- 左侧导航区域（可配合layui已有的垂直导航） -->
+            <ul class="layui-nav layui-nav-tree"  lay-filter="test">
+                <li class="layui-nav-item left-button"><a>控制台</a></li>
+                <li class="layui-nav-item left-button"><a>商户管理</a></li>
+                <li class="layui-nav-item left-button"><a>客户管理</a></li>
+                <li class="layui-nav-item left-button"><a>洗衣套餐管理</a></li>
+                <li class="layui-nav-item left-button"><a>订单管理</a></li>
+                <li class="layui-nav-item left-button"><a>评论管理</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="layui-body" id="home">
+        <!-- 内容主体区域 -->
+        <div style="padding: 15px;">
+            <div class="home">
+                <div style="width: 95%;height: 90%;margin: 0 auto">
+                    <div style="position: relative;margin: 0 auto">
+                        <canvas id="chart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <!--商户管理-->
+            <div class="home">
+                <table id="SUserTable" lay-filter="SUserTable"></table>
+                <script type="text/html" id="SUserRightTool">
+                    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+                    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+                </script>
+            </div>
+            <!--用户管理-->
+            <div class="home">
+                <table id="YUserTable" lay-filter="YUserTable"></table>
+                <script type="text/html" id="YUserRightTool">
+                    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+                    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+                </script>
+            </div>
+            <!--套餐管理-->
+            <div class="home">
+                <table id="SetMealTable" lay-filter="SetMealTable"></table>
+                <script type="text/html" id="SetMealRightTool">
+                    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+                    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+                </script>
+            </div>
+            <!--订单管理-->
+            <div class="home">
+                <table id="OrderTable" lay-filter="OrderTable"></table>
+                <script type="text/html" id="OrderRightTool">
+                    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+                </script>
+            </div>
+            <div class="home">
+                <table id="CommentsTable" lay-filter="CommentsTable"></table>
+                <script type="text/html" id="CommentsRightTool">
+                    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+                </script>
+            </div>
+        </div>
+    </div>
+
+    <div class="layui-footer">
+        <!-- 底部固定区域 -->
+        © lyn21.com - 洗涤乐园
+    </div>
+</div>
+<script type="text/html" id="orderEnableSwitch">
+    <!-- 这里的 checked 的状态只是演示 -->
+    <input type="checkbox" name="orderEnableSwitch" value="{{d.id}}" lay-skin="switch" lay-text="创建订单|已退款" lay-filter="orderEnableSwitch" {{ d.state ?'checked' : '' }} >
+</script>
+
+
+<script>
+    //JavaScript代码区域
+    layui.use('element',function(){
+        let element = layui.element;
+    });
+    let app;
+    startVue();
+</script>
+</body>
+</html>

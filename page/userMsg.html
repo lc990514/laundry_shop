@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>基本信息</title>
+    <script src="../lib/layui/layui.js"></script>
+    <script src="../lib/jquery-3.5.1.js"></script>
+    <script src="../lib/layer/layer.js"></script>
+    <script src="../lib/vue.js"></script>
+    <script src="../js/CONFIG.js"></script>
+    <style>
+        @import "../lib/layui/css/layui.css";
+        @import "../lib/layer/theme/default/layer.css";
+
+        .layui-upload-drag {
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+<div style="padding: 25px" id="APP">
+    <div class="layui-form layui-form-pane" lay-filter="usersPanel">
+        <h1>{{title}}</h1>
+        <fieldset class="layui-elem-field">
+            <legend>用户头像</legend>
+            <div class="layui-field-box">
+                <div class="">
+                    <div id="layer-photos-demo" class="layer-photos-demo">
+                        <img @click="openImg()" style='max-width: 200px;height: 200px' alt=""
+                             :src="getImageUrl(userMsg.portrait)">
+                    </div>
+                    <div class="layui-upload-drag" id="uploadImg">
+                        <i class="layui-icon layui-icon-add-1"></i>
+                    </div>
+                </div>
+            </div>
+        </fieldset>
+        <div class="layui-form-item" pane>
+            <label class="layui-form-label">昵称</label>
+            <div class="layui-input-block">
+                <input type="text" name="uname" id="uname" required lay-verify="required" v-model="userMsg.uname"
+                       autocomplete="off" class="layui-input">
+            </div>
+        </div>
+
+        <div class="layui-form-item" pane>
+            <label class="layui-form-label">个人简介</label>
+            <div class="layui-input-block">
+                <textarea name="introduce" id="introduce" class="layui-textarea" v-model="userMsg.introduce"></textarea>
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn layui-btn-normal rest" lay-submit lay-filter="rest">立即修改</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    function getQueryVariable(variable) {
+        let query = window.location.search.substring(1);
+        let vars = query.split("&");
+        for (let i = 0; i < vars.length; i++) {
+            let pair = vars[i].split("=");
+            if (pair[0] === variable) {
+                return pair[1];
+            }
+        }
+        return false;
+    }
+
+    let app = new Vue({
+        el: "#APP",
+        data: {
+            title: "个人信息",
+            token: "",
+            id: "",
+            userMsg: {uname: "", portrait: "", introduce: ""}
+        },
+        methods: {
+            getImageUrl: function (id) {
+                if (id === "") {
+                    return "";
+                }
+                return HOST + "/file/image/" + id;
+            },
+            openImg: function () {
+                layer.photos({
+                    photos: '#layer-photos-demo'
+                    , anim: 4 //0-6的选择，指定弹出图片动画类型，默认随机（请注意，3.0之前的版本用shift参数）
+                });
+            }
+        }
+    });
+    app.token = getQueryVariable("token");
+    app.id = getQueryVariable("id");
+
+    if (app.token === null || app.id === null || app.token === "null" || app.id === "null" || app.token === false || app.id === false) {
+        alert("没有权限");
+        window.close();
+        //获取窗口索引
+        let index = parent.layer.getFrameIndex(window.name);
+        parent.layer.close(index);
+    } else {
+        postAndHeader("/su/getUserById", {token: app.token, id: app.id}, {id: app.id}, function (data) {
+            console.log(data)
+            debug_(data)
+            if (data.code === 0) {
+                app.userMsg.uname = data.data.uname;
+                if (data.data.portrait !== null) {
+                    app.userMsg.portrait = data.data.portrait;
+                }
+                if (data.data.introduce === null || data.data.introduce === ""){
+                    app.userMsg.introduce = "这个人很懒，什么都没有写~";
+                }else {
+                    app.userMsg.introduce = data.data.introduce;
+                }
+            }
+        }, "获取用户信息");
+    }
+    layui.use('upload', function () {
+        let upload = layui.upload;
+
+        //执行实例
+        let uploadInst = upload.render({
+            elem: '#uploadImg' //绑定元素
+            , url: HOST + "/file/uploadImage" //上传接口
+            , headers: {id: app.id}
+            , done: function (res) {
+                debug_(res)
+                //上传完毕回调
+                if (res.code === 0) {
+                    app.userMsg.portrait = res.data;
+                } else {
+                    LMessageError(res.message, res.code);
+                }
+            }
+            , error: function () {
+                //请求异常回调
+                errorLog("文件上传异常", [index], "File");
+            }
+        });
+    });
+    layui.use('form', function () {
+        let form = layui.form;
+        form.on("submit(rest)", function () {
+            restUser(app.userMsg)
+            return false;
+        })
+    });
+
+    function restUser(user) {
+        let da = {
+            id: app.id,
+            uname: user.uname,
+            portrait: user.portrait,
+            introduce: user.introduce
+        }
+        postAndHeader("/su/restUser", {token: app.token, id: app.id}, da, function (data) {
+            if (data.code === 0) {
+                parent.LMessageSuccess("修改成功");
+                localStorage.removeItem("portrait");
+                localStorage.setItem("portrait",user.portrait);
+                localStorage.setItem("uname",user.uname);
+                let index = parent.layer.getFrameIndex(window.name); //获取窗口索引
+                parent.layer.close(index);
+            }else {
+                errorMessage(data);
+            }
+        },"正在提交")
+    }
+</script>
+</body>
+</html>

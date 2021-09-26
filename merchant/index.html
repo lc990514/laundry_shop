@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>商户平台</title>
+    <script type="text/javascript" src="../lib/vue.js"></script>
+    <script type="text/javascript" src="../lib/layui/layui.js"></script>
+    <script type="text/javascript" src="../lib/jquery-3.5.1.min.js"></script>
+    <script type="text/javascript" src="../lib/layer/layer.js"></script>
+    <script type="text/javascript" src="js/index.js"></script>
+    <script type="text/javascript" src="../js/CONFIG.js"></script>
+    <script type="text/javascript" src="../js/merchantBody.js"></script>
+    <script type="text/javascript" src="../js/Chart.min.js"></script>
+    <style>
+        @import "../lib/layui/css/layui.css";
+        @import "../lib/layer/theme/default/layer.css";
+    </style>
+</head>
+<body class="layui-layout-body">
+<div class="layui-layout layui-layout-admin" id="BOX">
+    <div class="layui-header">
+        <div class="layui-logo">商户平台</div>
+        <ul class="layui-nav layui-layout-right">
+            <li class="layui-nav-item">
+                <a href="javascript:void(0);">
+                    <img :src="getImageUrl()" class="layui-nav-img">
+                    {{uname}}
+                </a>
+                <dl class="layui-nav-child">
+                    <dd><a onclick="message()">基本资料</a></dd>
+                    <dd><a onclick="restPassword()">安全设置</a></dd>
+                </dl>
+            </li>
+            <li class="layui-nav-item"><a id="signQut" onclick="logout()">退出登录</a></li>
+        </ul>
+    </div>
+
+    <div class="layui-side layui-bg-black">
+        <div class="layui-side-scroll">
+            <!-- 左侧导航区域（可配合layui已有的垂直导航） -->
+            <ul class="layui-nav layui-nav-tree" lay-filter="test">
+                <li class="layui-nav-item left-button"><a>控制台</a></li>
+                <li class="layui-nav-item left-button"><a>本店洗衣套餐</a></li>
+                <li class="layui-nav-item left-button"><a>本店订单</a></li>
+                <li class="layui-nav-item left-button"><a>本店评论</a></li>
+                <li class="layui-nav-item left-button"><a>本店业绩</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="layui-body" id="home">
+        <!-- 内容主体区域 -->
+        <div style="padding: 15px;">
+            <!--控制台-->
+            <div class="home">
+                <fieldset class="layui-elem-field layui-field-title" style="margin-top: 30px;">
+                    <legend>简约后台记录</legend>
+                </fieldset>
+                <ul class="layui-timeline">
+                    <li class="layui-timeline-item" v-for="item in records">
+                        <i class="layui-icon layui-timeline-axis"></i>
+                        <div class="layui-timeline-content layui-text">
+                            <div class="layui-timeline-title">{{item.time + " " + item.messages}}</div>
+                        </div>
+                    </li>
+                    <li class="layui-timeline-item">
+                        <i class="layui-icon layui-anim layui-anim-rotate layui-anim-loop layui-timeline-axis"></i>
+                        <div class="layui-timeline-content layui-text">
+                            <div class="layui-timeline-title">更久前……</div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            <!--本店洗衣套餐-->
+            <div class="home">
+                <table id="SetMealTable" lay-filter="SetMealTable"></table>
+                <script type="text/html" id="SetMealRightTool">
+                    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+                    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+                </script>
+            </div>
+            <!--本店订单-->
+            <div class="home">
+                <table id="OrderTable" lay-filter="OrderTable"></table>
+                <script type="text/html" id="OrderRightTool">
+                    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+                </script>
+            </div>
+            <!--本店评论-->
+            <div class="home">
+                <table id="CommentsTable" lay-filter="CommentsTable"></table>
+            </div>
+            <!--本店业绩-->
+            <div class="home">
+                <div style="width: 95%;height: 90%;margin: 0 auto">
+                    <div style="position: relative;margin: 0 auto">
+                        <canvas id="chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="layui-footer">
+        <!-- 底部固定区域 -->
+        © lyn21.com - 洗涤乐园
+    </div>
+</div>
+<script type="text/html" id="orderEnableSwitch">
+    <!-- 这里的 checked 的状态只是演示 -->
+    <input type="checkbox" name="orderEnableSwitch" value="{{d.id}}" lay-skin="switch" lay-text="创建订单|已退款"
+           lay-filter="orderEnableSwitch" {{ d.state ?'checked' : '' }} >
+</script>
+
+<script>
+    //JavaScript代码区域
+    layui.use('element', function () {
+        let element = layui.element;
+    });
+    let app;
+    let records = [];
+    startVue();
+</script>
+</body>
+</html>
